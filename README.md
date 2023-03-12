@@ -1,4 +1,4 @@
-# Project Name: Maze Navigator
+# Maze Navigator
 
 This is a Python program that navigates a maze using the breadth-first search algorithm. The program uses the `curses` library to display the maze and the path taken by the algorithm.
 
