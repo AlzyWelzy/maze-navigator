@@ -2,13 +2,26 @@ import curses
 from curses import wrapper
 import queue
 import time
+from typing import List, Tuple
+from functools import reduce
 
 
 class Maze:
-    def __init__(self, maze):
+    def __init__(self, maze: List[List[str]]) -> None:
         self.maze = maze
 
-    def find_start(self, start):
+    def print(self, stdscr, path=[]) -> None:
+        BLUE = curses.color_pair(1)
+        RED = curses.color_pair(2)
+
+        for i, row in enumerate(self.maze):
+            for j, value in enumerate(row):
+                if (i, j) in path:
+                    stdscr.addstr(i, j * 2, "X", RED)
+                else:
+                    stdscr.addstr(i, j * 2, value, BLUE)
+
+    def find_start(self, start: str) -> Tuple[int, int]:
         for i, row in enumerate(self.maze):
             for j, value in enumerate(row):
                 if value == start:
@@ -16,7 +29,7 @@ class Maze:
 
         return None
 
-    def find_path(self, stdscr):
+    def find_path(self, stdscr) -> List[Tuple[int, int]]:
         start = "O"
         end = "X"
         start_pos = self.find_start(start)
@@ -31,7 +44,7 @@ class Maze:
             row, col = current_pos
 
             stdscr.clear()
-            self.print_maze(stdscr, path)
+            self.print(stdscr, path)
             time.sleep(0.2)
             stdscr.refresh()
 
@@ -51,7 +64,7 @@ class Maze:
                 q.put((neighbor, new_path))
                 visited.add(neighbor)
 
-    def find_neighbors(self, row, col):
+    def find_neighbors(self, row: int, col: int) -> List[Tuple[int, int]]:
         neighbors = []
 
         if row > 0:  # UP
@@ -64,17 +77,6 @@ class Maze:
             neighbors.append((row, col + 1))
 
         return neighbors
-
-    def print_maze(self, stdscr, path=[]):
-        BLUE = curses.color_pair(1)
-        RED = curses.color_pair(2)
-
-        for i, row in enumerate(self.maze):
-            for j, value in enumerate(row):
-                if (i, j) in path:
-                    stdscr.addstr(i, j * 2, "X", RED)
-                else:
-                    stdscr.addstr(i, j * 2, value, BLUE)
 
 
 def main(stdscr):
@@ -96,7 +98,10 @@ def main(stdscr):
     )
 
     maze.find_path(stdscr)
+
     stdscr.getch()
+    curses.endwin()
 
 
-wrapper(main)
+if __name__ == "__main__":
+    wrapper(main)

@@ -3,96 +3,99 @@ from curses import wrapper
 import queue
 import time
 
-maze = [
-    ["#", "O", "#", "#", "#", "#", "#", "#", "#"],
-    ["#", " ", " ", " ", " ", " ", " ", " ", "#"],
-    ["#", " ", "#", "#", " ", "#", "#", " ", "#"],
-    ["#", " ", "#", " ", " ", " ", "#", " ", "#"],
-    ["#", " ", "#", " ", "#", " ", "#", " ", "#"],
-    ["#", " ", "#", " ", "#", " ", "#", " ", "#"],
-    ["#", " ", "#", " ", "#", " ", "#", "#", "#"],
-    ["#", " ", " ", " ", " ", " ", " ", " ", "#"],
-    ["#", "#", "#", "#", "#", "#", "#", "X", "#"]
-]
 
+class Maze:
+    def __init__(self, maze):
+        self.maze = maze
 
-def print_maze(maze, stdscr, path=[]):
-    BLUE = curses.color_pair(1)
-    RED = curses.color_pair(2)
+    def find_start(self, start):
+        for i, row in enumerate(self.maze):
+            for j, value in enumerate(row):
+                if value == start:
+                    return i, j
 
-    for i, row in enumerate(maze):
-        for j, value in enumerate(row):
-            if (i, j) in path:
-                stdscr.addstr(i, j*2, "X", RED)
-            else:
-                stdscr.addstr(i, j*2, value, BLUE)
+        return None
 
+    def find_path(self, stdscr):
+        start = "O"
+        end = "X"
+        start_pos = self.find_start(start)
 
-def find_start(maze, start):
-    for i, row in enumerate(maze):
-        for j, value in enumerate(row):
-            if value == start:
-                return i, j
+        q = queue.Queue()
+        q.put((start_pos, [start_pos]))
 
-    return None
+        visited = set()
 
+        while not q.empty():
+            current_pos, path = q.get()
+            row, col = current_pos
 
-def find_path(maze, stdscr):
-    start = "O"
-    end = "X"
-    start_pos = find_start(maze, start)
+            stdscr.clear()
+            self.print_maze(stdscr, path)
+            time.sleep(0.2)
+            stdscr.refresh()
 
-    q = queue.Queue()
-    q.put((start_pos, [start_pos]))
+            if self.maze[row][col] == end:
+                return path
 
-    visited = set()
+            neighbors = self.find_neighbors(row, col)
+            for neighbor in neighbors:
+                if neighbor in visited:
+                    continue
 
-    while not q.empty():
-        current_pos, path = q.get()
-        row, col = current_pos
+                r, c = neighbor
+                if self.maze[r][c] == "#":
+                    continue
 
-        stdscr.clear()
-        print_maze(maze, stdscr, path)
-        time.sleep(0.2)
-        stdscr.refresh()
+                new_path = path + [neighbor]
+                q.put((neighbor, new_path))
+                visited.add(neighbor)
 
-        if maze[row][col] == end:
-            return path
+    def find_neighbors(self, row, col):
+        neighbors = []
 
-        neighbors = find_neighbors(maze, row, col)
-        for neighbor in neighbors:
-            if neighbor in visited:
-                continue
+        if row > 0:  # UP
+            neighbors.append((row - 1, col))
+        if row + 1 < len(self.maze):  # DOWN
+            neighbors.append((row + 1, col))
+        if col > 0:  # LEFT
+            neighbors.append((row, col - 1))
+        if col + 1 < len(self.maze[0]):  # RIGHT
+            neighbors.append((row, col + 1))
 
-            r, c = neighbor
-            if maze[r][c] == "#":
-                continue
+        return neighbors
 
-            new_path = path + [neighbor]
-            q.put((neighbor, new_path))
-            visited.add(neighbor)
+    def print_maze(self, stdscr, path=[]):
+        BLUE = curses.color_pair(1)
+        RED = curses.color_pair(2)
 
-
-def find_neighbors(maze, row, col):
-    neighbors = []
-
-    if row > 0:  # UP
-        neighbors.append((row - 1, col))
-    if row + 1 < len(maze):  # DOWN
-        neighbors.append((row + 1, col))
-    if col > 0:  # LEFT
-        neighbors.append((row, col - 1))
-    if col + 1 < len(maze[0]):  # RIGHT
-        neighbors.append((row, col + 1))
-
-    return neighbors
+        for i, row in enumerate(self.maze):
+            for j, value in enumerate(row):
+                if (i, j) in path:
+                    stdscr.addstr(i, j * 2, "X", RED)
+                else:
+                    stdscr.addstr(i, j * 2, value, BLUE)
 
 
 def main(stdscr):
     curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
 
-    find_path(maze, stdscr)
+    maze = Maze(
+        [
+            ["#", "O", "#", "#", "#", "#", "#", "#", "#"],
+            ["#", " ", " ", " ", " ", " ", " ", " ", "#"],
+            ["#", " ", "#", "#", " ", "#", "#", " ", "#"],
+            ["#", " ", "#", " ", " ", " ", "#", " ", "#"],
+            ["#", " ", "#", " ", "#", " ", "#", " ", "#"],
+            ["#", " ", "#", " ", "#", " ", "#", " ", "#"],
+            ["#", " ", "#", " ", "#", " ", "#", "#", "#"],
+            ["#", " ", " ", " ", " ", " ", " ", " ", "#"],
+            ["#", "#", "#", "#", "#", "#", "#", "X", "#"],
+        ]
+    )
+
+    maze.find_path(stdscr)
     stdscr.getch()
 
 
